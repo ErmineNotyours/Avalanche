@@ -12,6 +12,7 @@ var size = 10; // Pixle size
 var rows = 45; // height of prefill board
 var x1 = 0; // x Location of piece
 var y1 = 0; // y location of piece
+var cfl = false;
 var board = new Array(width + 6);
 for (var i = 0; i < (width + 6); i++){
   board[i] = new Array(height + 3);
@@ -181,8 +182,10 @@ function makeTurn(){
     // End of game code here
   }
   //window.requestAnimationFrame(empty);
-  // Make move loop.  Turn on event listeners.  Pause before moving piece automatically
-  // Uncaught TypeError: Cannot read property 'addEventListener' of undefined
+  // Make move loop.  Turn on event listeners.
+  // Add pause before moving piece automatically here
+  setTimeout(movePieceDown, 1000);
+  // Pause one second
   document.addEventListener('keydown', processKeydown);
 } // end makeTurn
 
@@ -192,21 +195,18 @@ function processKeydown(ev){
 
   switch(ev.code){
   case 'ArrowLeft':
-    //console.log('Process move left');
+    movePieceLeft();
     break;
   case 'ArrowRight':
-    //console.log('Process move right');
+    movePieceRight();
     break;
   case 'ArrowDown':
-    //console.log('Process force down');
+    movePieceDown();
     break;
   case 'Space':
-    //console.log('Process rotate');
+    rotate();
     break;
   }
-  // result: In processKeydown, ev =  KeyboardEvent {isTrusted: true, key: "ArrowLeft", code: "ArrowLeft", location: 0, ctrlKey: false, …}
-  // and In processKeydown, ev =  KeyboardEvent {isTrusted: true, key: " ", code: "Space", location: 0, ctrlKey: false, …}
-  // Need to access "code: " element of object
 }
 // check needs to be initialized for each round of a Check Field.  Move it there.
 var check = new Array(width + 6);
@@ -217,4 +217,36 @@ for (var i = 0; i < (width + 6); i++){
   }
 }
 function empty(){
+}
+function movePieceLeft(){
+  // put piece location into provisional variables so they can be returned if new location is blocked
+  x1 = x;
+  y1 = y;
+  x--;
+  movePiece();
+}
+
+function movePieceRight(){
+  x1 = x;
+  y1 = y;
+  x++;
+  movePiece();
+}
+function movePieceDown(){
+  x1 = x;
+  y1 = y;
+  y++;
+}
+function movePiece(){
+  cfl = false;
+  // Check to see if piece can move
+  // Remember, we've already incremented/decremnted x, y location
+  if ((board[x] [y]) || (board[x] [y + 1]) || board[x] [y + 2]){
+    cfl = true;
+    // Return old values
+    x = x1;
+    y = y1;
+  }
+}
+function rotate(){
 }
