@@ -215,6 +215,7 @@ function makeTurn(){
   }
   setTimeout(movePieceDown, 1000);
   // Pause one second
+  // Works once only.
   document.addEventListener('keydown', processKeydown);
 } // end makeTurn
 
@@ -283,7 +284,6 @@ function movePiece(){
   // Draw shape at new location
   for (var s = 0; s <= 2; s++){
     console.log('In draw shape at new location, s, shape[s], x1, y1, x, y ', s, shape[s], x1, y1, x, y);
-    // shape[s] is undefined
     // Set the color:
     switch (shape[s]){
     case 1:
@@ -301,4 +301,26 @@ function movePiece(){
   }
 }
 function rotate(){
+  var swap = shape[2];
+  shape[2] = shape[1];
+  shape[1] = shape[0];
+  shape[0] = swap;
+  // Draw shape
+  for (var s = 0; s <= 2; s++){
+    console.log('In rotate, s, shape[s], x1, y1, x, y ', s, shape[s], x1, y1, x, y);
+    // Set the color:
+    switch (shape[s]){
+    case 1:
+      ctx.fillStyle = 'red';
+      break;
+    case 2:
+      ctx.fillStyle = 'green';
+      break;
+    case 3:
+      ctx.fillStyle = 'blue';
+      break;
+    }
+    // Draw the shape
+    ctx.fillRect((x) * size, (y + s) * size, size - 1, size - 1);
+  }
 }
