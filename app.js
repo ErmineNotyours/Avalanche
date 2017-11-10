@@ -10,8 +10,10 @@ var symbols = 3;
 var size = 10; // Pixle size
 // declare multi-dimensional array board, per MDN Indexed Collections
 var rows = 45; // height of prefill board
-var x1 = 0; // x Location of piece
-var y1 = 0; // y location of piece
+var x = 0; // x location of piece
+var y = 0; // y location of piece
+var x1 = 0; // provisional x Location of piece
+var y1 = 0; // provisional y location of piece
 var cfl = false;
 var board = new Array(width + 6);
 for (var i = 0; i < (width + 6); i++){
@@ -21,8 +23,12 @@ for (var i = 0; i < (width + 6); i++){
   }
 }
 var erase = new Array(height);
-var shape = new Array(2);
-var nShape = new Array(3);
+//var shape = new Array(3);
+// for (var s = 0; s <= 2; s++){
+//   shape[s] = 0;
+//  // console.log('In shape initialization: s, shape[s] ', s, shape[s]);
+// }
+//var nShape = new Array(3);
 
 // Pad borders of board
 // bottom row
@@ -58,15 +64,15 @@ function prefill(){
       while (flag) {
         flag = false;
         cycle++;
-        console.log('Top of while flag, cycle = ', cycle);
+        //  console.log('Top of while flag, cycle = ', cycle);
         if (cycle > 10){
           guess++;
           i--; // Yes, I'm decrementing the loop counter
-          console.log('decrementing i: ', i);
+          //  console.log('decrementing i: ', i);
           cycle = 0;
           if (i < (left + 1)){
             globalPrefillFlag = true;
-            console.log('i is < 4, returning, ', i);
+            //  console.log('i is < 4, returning, ', i);
             return;
           }
         }
@@ -101,7 +107,7 @@ function prefill(){
           }
         }
         // 640 if array(i - 1, j + 1) = candidate then if array(i - 2, j + 2) = candidate then flag = 1 : rem same symbol diag left & down
-        console.log('At end of while flag loop: flag=', flag);
+      //  console.log('At end of while flag loop: flag=', flag);
       } // wend flag
       // Now that we have a viable candidate, set the color:
       switch (candidate){
@@ -117,7 +123,7 @@ function prefill(){
       }
       ctx.fillRect(i * size, j * size, size - 1, size - 1);
       board[i] [j] = candidate;
-      console.log('i, j, candidate', i, j, candidate);
+    //  console.log('i, j, candidate', i, j, candidate);
       // ctx.fillRect(0, 0, 50, 50);
       // ctx.fillStyle = 'rgba(0, 0, 200, 0.5)';
       // ctx.fillRect(30, 30, 50, 50);
@@ -132,9 +138,11 @@ while (globalPrefillFlag){
 }
 
 var nShape = []; // Next shape to be picked.  Necessary for a next window
+var shape = [];
 function pickShape(){
   for (var s = 0; s > 2; s++){
-    nShape[s] = Math.floor(Math.random() * symbols) + 1;
+    nShape = Math.floor(Math.random() * symbols) + 1;
+    //shape[s] = nShape;
   }
 }
 
@@ -148,12 +156,14 @@ makeTurn();
 
 function makeTurn(){
   // Set ititial position of piece on top of field
-  var x = left + Math.floor(width / 2);
-  var y = 0;
+  x = left + Math.floor(width / 2);
+  y = 0;
   // Copy next shape to current shape
-  for (var s = 0; s < 2; s++){
-    shape[s] = nShape[s];
-  }
+
+  shape = nShape;
+  //  console.log('copying from nShape: s, shape[s] ', s, shape[s]);
+  // shape is undefined, even though it is declared in the main body, next to nShape, which does hold values.
+
   // Pick next next shape
   for (var s = 0; s <= 2; s++){
     nShape[s] = Math.floor(Math.random() * symbols) + 1;
@@ -170,8 +180,8 @@ function makeTurn(){
       break;
     }
     // Draw the shape in next window
-    ctx.fillRect((width + 5) * size, (y + s) * size, size, size);
-    console.log('In pick next next, s, nShape[s]: ', s, nShape[s]);
+    ctx.fillRect((width + 5) * size, (y + s) * size, size - 1, size - 1);
+  //  console.log('In pick next next, s, nShape[s]: ', s, nShape[s]);
   } // next s, end pick next next shape
   var t1 = time;
   var bot = 0;
@@ -184,6 +194,25 @@ function makeTurn(){
   //window.requestAnimationFrame(empty);
   // Make move loop.  Turn on event listeners.
   // Add pause before moving piece automatically here
+  // Draw initial shape
+  for (var s = 0; s <= 2; s++){
+  //  console.log('In draw initial shape, s, shape[s]', s, shape);
+    // shape[s] is undefined
+    // Set the color:
+    switch (shape[s]){
+    case 1:
+      ctx.fillStyle = 'red';
+      break;
+    case 2:
+      ctx.fillStyle = 'green';
+      break;
+    case 3:
+      ctx.fillStyle = 'blue';
+      break;
+    }
+    // Draw the shape
+    ctx.fillRect((x) * size, (y + s) * size, size - 1, size - 1);
+  }
   setTimeout(movePieceDown, 1000);
   // Pause one second
   document.addEventListener('keydown', processKeydown);
@@ -191,7 +220,7 @@ function makeTurn(){
 
 function processKeydown(ev){
   event.preventDefault();
-  //console.log('In processKeydown, ev = ', ev, ev.code);
+  ////console.log('In processKeydown, ev = ', ev, ev.code);
 
   switch(ev.code){
   case 'ArrowLeft':
@@ -236,16 +265,39 @@ function movePieceDown(){
   x1 = x;
   y1 = y;
   y++;
+  movePiece();
 }
 function movePiece(){
   cfl = false;
   // Check to see if piece can move
   // Remember, we've already incremented/decremnted x, y location
   if ((board[x] [y]) || (board[x] [y + 1]) || board[x] [y + 2]){
-    cfl = true;
+    cfl = true; // Triggers checkField on moveDown.
     // Return old values
     x = x1;
     y = y1;
+  } // end if
+  // Erase shape at old location
+  ctx.fillStyle = 'white';
+  ctx.fillRect(x1 * size, y1 * size, size - 1, size * 3);
+  // Draw shape at new location
+  for (var s = 0; s <= 2; s++){
+    console.log('In draw shape at new location, s, shape[s], x1, y1, x, y ', s, shape[s], x1, y1, x, y);
+    // shape[s] is undefined
+    // Set the color:
+    switch (shape[s]){
+    case 1:
+      ctx.fillStyle = 'red';
+      break;
+    case 2:
+      ctx.fillStyle = 'green';
+      break;
+    case 3:
+      ctx.fillStyle = 'blue';
+      break;
+    }
+    // Draw the shape
+    ctx.fillRect((x) * size, (y + s) * size, size - 1, size - 1);
   }
 }
 function rotate(){
