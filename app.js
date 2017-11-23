@@ -2,19 +2,21 @@
 var canvas = document.getElementById('canvas');
 // if (canvas.getContext) {}
 var ctx = canvas.getContext('2d');
+ctx.font = '48px serif';
 var time = 100000; // Rough time delay
-var height = 60;
+var height = 10;
 var left = 2; // Not followed throughout.  Kept for compatibility
-var width = 80;
+var width = 6;
 var symbols = 3;
-var size = 10; // Pixle size
+var size = 30; // Pixle size
 // declare multi-dimensional array board, per MDN Indexed Collections
-var rows = 45; // height of prefill board
+var rows = 5; // height of prefill board
 var x = 0; // x location of piece
 var y = 0; // y location of piece
 var x1 = 0; // provisional x Location of piece
 var y1 = 0; // provisional y location of piece
 var cfl = false;
+var dead = 0;
 var board = new Array(width + 6);
 for (var i = 0; i < (width + 6); i++){
   board[i] = new Array(height + 3);
@@ -36,14 +38,16 @@ for (var fill = 0; fill < (width + 6); fill++){
   board[fill] [height + 1] = 15;
 }
 // Left and right sides
-for (fill = 0; fill < (height + 3); fill++){
+for (var fill = 0; fill < (height + 3); fill++){
   board[left] [fill] = 15;
   board[left + width + 1] [fill] = 15;
 }
+
 // Draw borders
 ctx.fillStyle = 'black';
-ctx.fillRect((left * size), 0, size, (size * height));
-ctx.fillRect(((left + width) * size), 0, size, (size * height));
+ctx.fillRect((left * size), 0, size, (size * (height + 1)));
+ctx.fillRect(((left + (width + 1)) * size), 0, size, (size * (height + 1)));
+// Draw bottom boarder too?
 
 // Here in original version is where you would mark the center bottom of the board for the option of moving on to the next round
 
@@ -57,8 +61,8 @@ function prefill(){
   var candidate = 0;
   var guess = 1; // Number of guesses it is taking to find a stable cell
 
-  for (var i = left + 1; i < width + 2; i++){
-    for (var j = height - rows; j < height; j++){
+  for (var i = left + 1; i <= width + 2; i++){
+    for (var j = height - rows; j <= height; j++){
       var cycle = 0;
       var flag = true;
       while (flag) {
@@ -78,6 +82,8 @@ function prefill(){
         }
         candidate = Math.floor(Math.random() * symbols) + 1;
         // Proximity checking
+        // why didn't I use && (and) here?
+
         // Same symbol horizontal left
         if (board[i - 1] [j] == candidate){
           if (board[i - 2] [j] == candidate){
@@ -183,7 +189,6 @@ function makeTurn(){
     ctx.fillRect((width + 5) * size, (y + s) * size, size - 1, size - 1);
   //  console.log('In pick next next, s, nShape[s]: ', s, nShape[s]);
   } // next s, end pick next next shape
-  var t1 = time;
   var bot = 0;
   var drop = 0;
 
@@ -193,7 +198,6 @@ function makeTurn(){
   }
   //window.requestAnimationFrame(empty);
   // Make move loop.  Turn on event listeners.
-  // Add pause before moving piece automatically here
   // Draw initial shape
   for (var s = 0; s <= 2; s++){
   //  console.log('In draw initial shape, s, shape[s]', s, shape);
@@ -238,14 +242,7 @@ function processKeydown(ev){
     break;
   }
 }
-// check needs to be initialized for each round of a Check Field.  Move it there.
-var check = new Array(width + 6);
-for (var i = 0; i < (width + 6); i++){
-  check[i] = new Array(height + 3);
-  for (var j = 0; j < (height + 3); j++){
-    check[i][j] = 0;
-  }
-}
+
 function empty(){
 }
 function movePieceLeft(){
@@ -266,24 +263,27 @@ function movePieceDown(){
   x1 = x;
   y1 = y;
   y++;
-  movePiece();
+  if (movePiece()){
+    checkField();
+  };
 }
 function movePiece(){
   cfl = false;
   // Check to see if piece can move
   // Remember, we've already incremented/decremnted x, y location
-  if ((board[x] [y]) || (board[x] [y + 1]) || board[x] [y + 2]){
+  if ((board[x] [y]) || (board[x] [y + 1]) || board[x] [y + 2]){ // There's something at the new location.
     cfl = true; // Triggers checkField on moveDown.
     // Return old values
     x = x1;
     y = y1;
+    return true; // For triggering checkField
   } // end if
   // Erase shape at old location
   ctx.fillStyle = 'white';
   ctx.fillRect(x1 * size, y1 * size, size - 1, size * 3);
   // Draw shape at new location
   for (var s = 0; s <= 2; s++){
-    console.log('In draw shape at new location, s, shape[s], x1, y1, x, y ', s, shape[s], x1, y1, x, y);
+    //console.log('In draw shape at new location, s, shape[s], x1, y1, x, y ', s, shape[s], x1, y1, x, y);
     // Set the color:
     switch (shape[s]){
     case 1:
@@ -307,7 +307,7 @@ function rotate(){
   shape[0] = swap;
   // Draw shape
   for (var s = 0; s <= 2; s++){
-    console.log('In rotate, s, shape[s], x1, y1, x, y ', s, shape[s], x1, y1, x, y);
+    //console.log('In rotate, s, shape[s], x1, y1, x, y ', s, shape[s], x1, y1, x, y);
     // Set the color:
     switch (shape[s]){
     case 1:
@@ -323,4 +323,165 @@ function rotate(){
     // Draw the shape
     ctx.fillRect((x) * size, (y + s) * size, size - 1, size - 1);
   }
+}
+
+function checkField(){
+  // Add piece to board
+  for (var s = 0; s <= 2; s++){
+    board[x] [y + s] = shape[s];
+  }
+
+  var found = true;
+  while (found){
+    found = false;
+
+    // Initialize check
+    var check = new Array(width + 6);
+    for (var i = 0; i <= (width + 6); i++){
+      check[i] = new Array(height + 3);
+      for (var j = 0; j <= (height + 3); j++){
+        check[i] [j] = false;
+      }
+    }
+
+    // Check for three in a row
+    for (var j = 2; j <= height; j++){
+      for (var i = left + 1; i <= width + 2; i++){
+        if(board[i] [j] != 0){ // Skip dead cells
+          //console.log('Inside three in a row, i, j, board[i] [j], found ', i, j, board[i] [j], found);
+
+          // Check horizontal
+          // if array(i, j) = array(i - 1, j) and array(i, j) = array(i + 1, j) then check(i - 1, j) = 1 : check(i, j) = 1 : check(i + 1, j) =1 : found = 1
+          if (board [i] == board[i - 1] [j] && board[i] [j] == board[i + 1] [j]){
+            found = true;
+            check[i] [j] = true;
+            check[i - 1] [j] = true;
+            check[i + 1] [j] = true;
+          }
+
+          // Check vertical
+          // if array(i, j) = array(i, j - 1) and array(i, j) = array(i, j + 1) then check(i, j - 1) = 1 : check(i, j) = 1 : check(i, j + 1) = 1 : found = 1
+          if (board[i] [j] == board[i] [j - 1] && board[i] [j] == board[i] [j + 1]){
+            found = true;
+            check[i] [j] = true;
+            check[i] [j - 1] = true;
+            check[i] [j + 1] = true;
+          }
+
+          // Check diagonal left
+          // if array(i, j) = array(i - 1, j - 1) and array(i, j) = array(i + 1, j + 1) then check(i - 1, j - 1) = 1 : check(i, j) = 1 : check(i + 1, j + 1) = 1 : found = 1
+          if (board[i] [j] == board[i - 1] [j - 1] && board[i] [j] == board[i + 1] [j + 1]){
+            found = true;
+            check[i] [j] = true;
+            check[i - 1] [j - 1] = true;
+            check[i + 1] [j + 1] = true;
+          }
+
+          // Check diagonal right
+          // if array(i, j) = array(i + 1, j - 1) and array(i, j) = array(i - 1, j + 1) then check(i + 1, j - 1) = 1 : check(i, j) = 1 : check(i - 1, j + 1) = 1 : found = 1
+          if (board[i] [j] == board[i + 1] [j - 1] && board[i] [j] == board[i - 1] [j + 1]){
+            found = true;
+            check[i] [j] = true;
+            check[i - 1] [j + 1] = true;
+            check[i + 1] [j - 1] = true;
+          }
+        } // end if skip dead cells
+      } // next i
+    } // next j
+
+    // Count deleted cells
+    var nowDead = 0;
+    for(j = 2; j <= height; j++){
+      for(i = left + 1; i <= width + 2; i++){
+        if(check[i] [j]){
+          dead++;
+          nowDead++;
+        }
+      }
+    }
+    // update totals to screen
+    console.log('dead, nowDead ', dead, nowDead);
+
+    if(!found){
+      return;
+    }
+
+    // Flash cells
+    for(var blink = 0; blink <= 1; blink++){
+      for(var j = 2; j <= height; j++){
+        for(var i = left + 1; i <= width + 2; i++){
+          if(check[i] [j]){
+            ctx.fillStyle = 'white';
+            ctx.fillRect((i) * size, (j) * size, size - 1, size - 1);
+          }
+        } // next i
+      } // next j
+      console.log('about to blinkoff');
+      setTimeout(blinkoff, 500);
+      function blinkoff(){}
+
+      for(var j = 2; j <= height; j++){
+        for(var i = left + 1; i <= width + 2; i++){
+          if(check[i] [j]){
+            switch (board[i] [j]){
+            case 0:
+              ctx.fillStyle = 'white';
+              break;
+            case 1:
+              ctx.fillStyle = 'red';
+              break;
+            case 2:
+              ctx.fillStyle = 'green';
+              break;
+            case 3:
+              ctx.fillStyle = 'blue';
+              break;
+            }
+          }
+        } // next i
+      } // next j
+      ctx.fillRect((i) * size, (j) * size, size - 1, size - 1);
+      setTimeout(blinkon, 500);
+      function blinkon(){}
+    } // next blink
+    // Remove cells from board
+    // 2500 for i = 3 to width + 2
+    for(var i = left + 1; i <= width + 2; i++){
+      debugger;
+      // 2505 offset = 0
+      var offset = 0;
+      // 2510 for j = height to 2 step -1
+      for(j = height; j >= 2; j--){
+        // 2520 if not check(i,j) then array(i, j + offset) = array(i, j) : color= array(i, j): plot i, j + offset
+        if(!check[i] [j]){
+          board[i] [j + offset] = board[i] [j];
+          switch (board[i] [j]){
+          case 0:
+            ctx.fillStyle = 'white';
+            break;
+          case 1:
+            ctx.fillStyle = 'red';
+            break;
+          case 2:
+            ctx.fillStyle = 'green';
+            break;
+          case 3:
+            ctx.fillStyle = 'blue';
+            break;
+          }
+          ctx.fillRect(i * size, (j + offset) * size, size - 1, size - 1);
+          ctx.fillText(offset, i * size + ((width + 5) * size), ((j + offset) * size)); // Temp code.  Remove after debugging
+        } // else should work, but use the following if statement for now
+        if (check[i] [j]){
+          // 2530 if check(i, j) then offset = offset + 1 :
+          offset++;
+          console.log('offset incrementing, i, j, offset ', i, j, offset);
+        }
+      } // next j
+    } // next i
+
+    // check for end of screen here, if option chosen
+    // if check(2 + int(width/2) ,height) then goto 460 (prefill board)
+
+  } // wend found
 }
