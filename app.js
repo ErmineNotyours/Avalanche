@@ -146,8 +146,10 @@ while (globalPrefillFlag){
 var nShape = []; // Next shape to be picked.  Necessary for a next window
 var shape = [];
 function pickShape(){
-  for (var s = 0; s > 2; s++){
-    nShape = Math.floor(Math.random() * symbols) + 1;
+  for (var s = 0; s <= 2; s++){
+    nShape[s] = Math.floor(Math.random() * symbols) + 1;
+    console.log('In pickShape, s, nShape ', s, nShape);
+
     //shape[s] = nShape;
   }
 }
@@ -160,15 +162,14 @@ pickShape(); // Pick shape for initial Next window
 
 makeTurn();
 
-function makeTurn(){
+function preTurn(){
   // Set ititial position of piece on top of field
   x = left + Math.floor(width / 2);
   y = 0;
   // Copy next shape to current shape
 
   shape = nShape;
-  //  console.log('copying from nShape: s, shape[s] ', s, shape[s]);
-  // shape is undefined, even though it is declared in the main body, next to nShape, which does hold values.
+  console.log('copying from nShape: s, shape[s] ', s, shape[s]);
 
   // Pick next next shape
   for (var s = 0; s <= 2; s++){
@@ -196,12 +197,9 @@ function makeTurn(){
   if (board[x] [y] || board[x] [y + 1] || board[x] [y + 2]){
     // End of game code here
   }
-  //window.requestAnimationFrame(empty);
-  // Make move loop.  Turn on event listeners.
   // Draw initial shape
   for (var s = 0; s <= 2; s++){
-  //  console.log('In draw initial shape, s, shape[s]', s, shape);
-    // shape[s] is undefined
+    //  console.log('In draw initial shape, s, shape[s]', s, shape);
     // Set the color:
     switch (shape[s]){
     case 1:
@@ -217,6 +215,13 @@ function makeTurn(){
     // Draw the shape
     ctx.fillRect((x) * size, (y + s) * size, size - 1, size - 1);
   }
+    
+}
+
+function makeTurn(){
+  preTurn();
+  //window.requestAnimationFrame(empty);
+  // Make move loop.  Turn on event listeners.
   setTimeout(movePieceDown, 1000);
   // Pause one second
   // Works once only.
@@ -225,7 +230,7 @@ function makeTurn(){
 
 function processKeydown(ev){
   event.preventDefault();
-  ////console.log('In processKeydown, ev = ', ev, ev.code);
+  //console.log('In processKeydown, ev = ', ev, ev.code);
 
   switch(ev.code){
   case 'ArrowLeft':
@@ -245,6 +250,7 @@ function processKeydown(ev){
 
 function empty(){
 }
+
 function movePieceLeft(){
   // put piece location into provisional variables so they can be returned if new location is blocked
   x1 = x;
@@ -349,6 +355,7 @@ function checkField(){
       for (var i = left + 1; i <= width + 2; i++){
         if(board[i] [j] != 0){ // Skip dead cells
           //console.log('Inside three in a row, i, j, board[i] [j], found ', i, j, board[i] [j], found);
+          //debugger;
 
           // Check horizontal
           // if array(i, j) = array(i - 1, j) and array(i, j) = array(i + 1, j) then check(i - 1, j) = 1 : check(i, j) = 1 : check(i + 1, j) =1 : found = 1
@@ -403,11 +410,13 @@ function checkField(){
     console.log('dead, nowDead ', dead, nowDead);
 
     if(!found){
+      preTurn();
       return;
     }
 
     // Flash cells
-    for(var blink = 0; blink <= 1; blink++){
+    function blinkOff(){
+      console.log('blinkOff');
       for(var j = 2; j <= height; j++){
         for(var i = left + 1; i <= width + 2; i++){
           if(check[i] [j]){
@@ -416,10 +425,10 @@ function checkField(){
           }
         } // next i
       } // next j
-      console.log('about to blinkoff');
-      setTimeout(blinkoff, 500);
-      function blinkoff(){}
+    }
 
+    function blinkOn(){
+      console.log('blinkOn');
       for(var j = 2; j <= height; j++){
         for(var i = left + 1; i <= width + 2; i++){
           if(check[i] [j]){
@@ -441,23 +450,29 @@ function checkField(){
         } // next i
       } // next j
       ctx.fillRect((i) * size, (j) * size, size - 1, size - 1);
-      setTimeout(blinkon, 500);
-      function blinkon(){}
+    }
+
+    for(var blink = 0; blink <= 1; blink++){
+      blinkOff();
+      setTimeout(blinkOn, 500);
+      setTimeout(blinkOff, 500);
+      setTimeout(blinkOn, 500);
     } // next blink
+
     // Remove cells from board
     // 2500 for i = 3 to width + 2
     for(var i = left + 1; i <= width + 2; i++){
-      debugger;
+      //debugger;
       // 2505 offset = 0
       var offset = 0;
       // 2510 for j = height to 2 step -1
-      for(j = height; j >= 2; j--){
+      for(j = height; j >= 0; j--){
         // 2520 if not check(i,j) then array(i, j + offset) = array(i, j) : color= array(i, j): plot i, j + offset
         if(!check[i] [j]){
           board[i] [j + offset] = board[i] [j];
           switch (board[i] [j]){
           case 0:
-            ctx.fillStyle = 'white';
+            ctx.fillStyle = 'RGB(255, 251, 202)' ; // offwhite for debugging.  Return to 'white' or whatever the background is
             break;
           case 1:
             ctx.fillStyle = 'red';
@@ -478,10 +493,18 @@ function checkField(){
           console.log('offset incrementing, i, j, offset ', i, j, offset);
         }
       } // next j
+      if (offset > 0){
+        for (var l = offset; l >= 0; l--){
+          // There could be cells to be blanked above the reach of j + offset, so this clears them.
+          ctx.fillStyle = 'RGB(255, 251, 202)' ; // offwhite for debugging.  Return to 'white' or whatever the background is
+          ctx.fillRect(i * size, (l) * size, size - 1, size - 1);
+          // ctx.fillText(l, i * size + ((width + 5) * size), ((l) * size)); // Temp code.  Remove after debugging
+        }
+      }
     } // next i
 
     // check for end of screen here, if option chosen
     // if check(2 + int(width/2) ,height) then goto 460 (prefill board)
 
   } // wend found
-}
+} // Checkfield
