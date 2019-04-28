@@ -8,7 +8,7 @@ var height = 10;
 var left = 2; // Not followed throughout.  Kept for compatibility
 var width = 6;
 var symbols = 3;
-var size = 30; // Pixle size
+var size = 30; // Pixel size
 // declare multi-dimensional array board, per MDN Indexed Collections
 var rows = 5; // height of prefill board
 var x = 0; // x location of piece
@@ -55,7 +55,7 @@ ctx.fillRect(((left + (width + 1)) * size), 0, size, (size * (height + 1)));
 function prefill(){
   //debugger;
   globalPrefillFlag = false;
-  // Blank existing piece for manuall new screen
+  // Blank existing piece for manual new screen
   ctx.fillStyle = 'white';
   ctx.fillRect((x1 * size), (y1 * size), size - 1, (3 * size) - 1);
   var candidate = 0;
@@ -163,7 +163,7 @@ pickShape(); // Pick shape for initial Next window
 makeTurn();
 
 function preTurn(){
-  // Set ititial position of piece on top of field
+  // Set initial position of piece on top of field
   x = left + Math.floor(width / 2);
   y = 0;
   // Copy next shape to current shape
@@ -197,6 +197,7 @@ function preTurn(){
   if (board[x] [y] || board[x] [y + 1] || board[x] [y + 2]){
     // End of game code here
   }
+
   // Draw initial shape
   for (var s = 0; s <= 2; s++){
     //  console.log('In draw initial shape, s, shape[s]', s, shape);
@@ -215,17 +216,17 @@ function preTurn(){
     // Draw the shape
     ctx.fillRect((x) * size, (y + s) * size, size - 1, size - 1);
   }
-    
+
 }
 
 function makeTurn(){
   preTurn();
+  document.addEventListener('keydown', processKeydown);
   //window.requestAnimationFrame(empty);
   // Make move loop.  Turn on event listeners.
-  setTimeout(movePieceDown, 1000);
+  setTimeout(movePieceDown(), 1000);
   // Pause one second
   // Works once only.
-  document.addEventListener('keydown', processKeydown);
 } // end makeTurn
 
 function processKeydown(ev){
@@ -276,7 +277,7 @@ function movePieceDown(){
 function movePiece(){
   cfl = false;
   // Check to see if piece can move
-  // Remember, we've already incremented/decremnted x, y location
+  // Remember, we've already incremented/decremented x, y location
   if ((board[x] [y]) || (board[x] [y + 1]) || board[x] [y + 2]){ // There's something at the new location.
     cfl = true; // Triggers checkField on moveDown.
     // Return old values
@@ -359,7 +360,7 @@ function checkField(){
 
           // Check horizontal
           // if array(i, j) = array(i - 1, j) and array(i, j) = array(i + 1, j) then check(i - 1, j) = 1 : check(i, j) = 1 : check(i + 1, j) =1 : found = 1
-          if (board [i] == board[i - 1] [j] && board[i] [j] == board[i + 1] [j]){
+          if (board [i] [j] == board[i - 1] [j] && board[i] [j] == board[i + 1] [j]){
             found = true;
             check[i] [j] = true;
             check[i - 1] [j] = true;
@@ -416,7 +417,7 @@ function checkField(){
 
     // Flash cells
     function blinkOff(){
-      console.log('blinkOff');
+      //console.log('blinkOff');
       for(var j = 2; j <= height; j++){
         for(var i = left + 1; i <= width + 2; i++){
           if(check[i] [j]){
@@ -428,7 +429,7 @@ function checkField(){
     }
 
     function blinkOn(){
-      console.log('blinkOn');
+      //console.log('blinkOn');
       for(var j = 2; j <= height; j++){
         for(var i = left + 1; i <= width + 2; i++){
           if(check[i] [j]){
@@ -454,9 +455,10 @@ function checkField(){
 
     for(var blink = 0; blink <= 1; blink++){
       blinkOff();
-      setTimeout(blinkOn, 500);
-      setTimeout(blinkOff, 500);
-      setTimeout(blinkOn, 500);
+      setTimeout(blinkOn(), 500);
+      setTimeout(blinkOff(), 500);
+      setTimeout(blinkOn(), 500); // blinkOff and blinkOn get called multiple times, but there is no delay
+      // Functions are called, but there is no delay.
     } // next blink
 
     // Remove cells from board
