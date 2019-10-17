@@ -24,6 +24,14 @@ for (var i = 0; i < (width + 6); i++){
     board[i][j] = 0;
   }
 }
+// Initialize check
+var check = new Array(width + 6);
+for (var i = 0; i <= (width + 6); i++){
+  check[i] = new Array(height + 3);
+  for (var j = 0; j <= (height + 3); j++){
+    check[i] [j] = false;
+  }
+}
 var erase = new Array(height);
 //var shape = new Array(3);
 // for (var s = 0; s <= 2; s++){
@@ -246,6 +254,9 @@ function processKeydown(ev){
   case 'Space':
     rotate();
     break;
+  case 'KeyR':
+    redraw();
+    break;
   }
 }
 
@@ -342,8 +353,9 @@ function checkField(){
   while (found){
     found = false;
 
-    // Initialize check
-    var check = new Array(width + 6);
+    // Reinitialize check
+    // var check = new Array(width + 6);
+    check = new Array(width + 6);
     for (var i = 0; i <= (width + 6); i++){
       check[i] = new Array(height + 3);
       for (var j = 0; j <= (height + 3); j++){
@@ -417,7 +429,7 @@ function checkField(){
 
     // Flash cells
     function blinkOff(){
-      //console.log('blinkOff');
+      console.log('blinkOff');
       for(var j = 2; j <= height; j++){
         for(var i = left + 1; i <= width + 2; i++){
           if(check[i] [j]){
@@ -429,7 +441,7 @@ function checkField(){
     }
 
     function blinkOn(){
-      //console.log('blinkOn');
+      console.log('blinkOn');
       for(var j = 2; j <= height; j++){
         for(var i = left + 1; i <= width + 2; i++){
           if(check[i] [j]){
@@ -454,59 +466,104 @@ function checkField(){
     }
 
     for(var blink = 0; blink <= 1; blink++){
-      blinkOff();
-      setTimeout(blinkOn(), 500);
-      setTimeout(blinkOff(), 500);
+    //  blinkOff();
+      setTimeout(function(){console.log('This is where blinkon is supposed to be');}, 2000);
+      setTimeout(function(){blinkOn();}, 500);
+      setTimeout(function(){blinkOff();}, 500);
       setTimeout(blinkOn(), 500); // blinkOff and blinkOn get called multiple times, but there is no delay
-      // Functions are called, but there is no delay.
+      // Functions are called, but there is no delay because they were simply called one after the other.  The function that collapses and redraws the board used to execute without delay.  That function needs to be called after a delay.  That function executes below; now a separate function.
     } // next blink
 
-    // Remove cells from board
-    // 2500 for i = 3 to width + 2
-    for(var i = left + 1; i <= width + 2; i++){
-      //debugger;
-      // 2505 offset = 0
-      var offset = 0;
-      // 2510 for j = height to 2 step -1
-      for(j = height; j >= 0; j--){
-        // 2520 if not check(i,j) then array(i, j + offset) = array(i, j) : color= array(i, j): plot i, j + offset
-        if(!check[i] [j]){
-          board[i] [j + offset] = board[i] [j];
-          switch (board[i] [j]){
-          case 0:
-            ctx.fillStyle = 'RGB(255, 251, 202)' ; // offwhite for debugging.  Return to 'white' or whatever the background is
-            break;
-          case 1:
-            ctx.fillStyle = 'red';
-            break;
-          case 2:
-            ctx.fillStyle = 'green';
-            break;
-          case 3:
-            ctx.fillStyle = 'blue';
-            break;
-          }
-          ctx.fillRect(i * size, (j + offset) * size, size - 1, size - 1);
-          ctx.fillText(offset, i * size + ((width + 5) * size), ((j + offset) * size)); // Temp code.  Remove after debugging
-        } // else should work, but use the following if statement for now
-        if (check[i] [j]){
-          // 2530 if check(i, j) then offset = offset + 1 :
-          offset++;
-          console.log('offset incrementing, i, j, offset ', i, j, offset);
-        }
-      } // next j
-      if (offset > 0){
-        for (var l = offset; l >= 0; l--){
-          // There could be cells to be blanked above the reach of j + offset, so this clears them.
-          ctx.fillStyle = 'RGB(255, 251, 202)' ; // offwhite for debugging.  Return to 'white' or whatever the background is
-          ctx.fillRect(i * size, (l) * size, size - 1, size - 1);
-          // ctx.fillText(l, i * size + ((width + 5) * size), ((l) * size)); // Temp code.  Remove after debugging
-        }
-      }
-    } // next i
+    console.log('About to call setTimeout(collapse) with delay of 1000');
+    setTimeout(function(){collapse();},1000); 
+    //console.log('Calling collapse directly, without delay');
+    collapse(); // this gives results that I didn't have before it was spun into its own function.  There is an infinite loop.
 
     // check for end of screen here, if option chosen
     // if check(2 + int(width/2) ,height) then goto 460 (prefill board)
 
   } // wend found
-} // Checkfield
+} // checkField
+
+function collapse() {
+  console.log('Inside collapse()');
+  // Remove cells from board
+  // 2500 for i = 3 to width + 2
+  for(var i = left + 1; i <= width + 2; i++){
+    //debugger;
+    // 2505 offset = 0
+    var offset = 0;
+    // 2510 for j = height to 2 step -1
+    for(j = height; j >= 0; j--){ // still freezes here, later in the game
+      // console.log('Top of collapse i, j, board [i][j]: ', i, j, board[i][j]);
+      // 2520 if not check(i,j) then array(i, j + offset) = array(i, j) : color= array(i, j): plot i, j + offset
+      if(!check[i] [j]){
+        // console.log('!check triggered: i, j, check[i][j], offset', i, j, check[i][j], offset);
+        board[i] [j + offset] = board[i] [j];
+        switch (board[i] [j]){
+        case 0:
+          ctx.fillStyle = 'RGB(255, 251, 202)' ; // offwhite for debugging.  Return to 'white' or whatever the background is
+          break;
+        case 1:
+          ctx.fillStyle = 'red';
+          break;
+        case 2:
+          ctx.fillStyle = 'green';
+          break;
+        case 3:
+          ctx.fillStyle = 'blue';
+          break;
+        } // Switch
+        ctx.fillRect(i * size, (j + offset) * size, size - 1, size - 1);
+        ctx.fillText(offset, i * size + ((width + 5) * size), ((j + offset) * size)); // Temp code.  Remove after debugging
+      } // Endif not check 
+ 
+      // This should be an else, after if not check.  Check brackets.
+      // Else should work, but use the following if statement for now
+      // console.log('Before if check: i, j, check[i][j]', i, j, check[i][j]);
+      if (check[i] [j]){
+        //else{
+        // 2530 if check(i, j) then offset = offset + 1 :
+        offset++;
+        console.log('Collapse: offset incrementing, i, j, offset ', i, j, offset);
+      } // endif check [i] [j]
+    } // next j
+  } // next i
+  if (offset > 0){
+    for (var l = offset; l >= 0; l--){
+        // There could be cells to be blanked above the reach of j + offset, so this clears them from screen, but not from board[][]?
+      ctx.fillStyle = 'RGB(255, 251, 202)' ; // offwhite for debugging.  Return to 'white' or whatever the background is
+      ctx.fillRect(i * size, (l) * size, size - 1, size - 1);
+      // ctx.fillText(l, i * size + ((width + 5) * size), ((l) * size)); // Temp code.  Remove after debugging
+    } // next l
+  } // end if offset > 0
+} // end function collapse
+
+
+function redraw()
+{
+  //console.log('Inside redraw');
+
+  for (var i = left + 1; i <= width + 2; i++){
+    for (var j = height - rows; j <= height; j++){
+      console.log('i ' + i + ' j ' + j + ' board [i] [j] ' + board [i] [j]);
+      switch (board[i] [j]){
+      case 0:
+        ctx.fillStyle = 'white';
+        break;
+      case 1:
+        ctx.fillStyle = 'red';
+        break;
+      case 2:
+        ctx.fillStyle = 'green';
+        break;
+      case 3:
+        ctx.fillStyle = 'blue';
+        break;
+      }
+
+      ctx.fillRect(i * size, j * size, size - 1, size - 1);
+
+    } // next j
+  } // next i
+} // redraw
