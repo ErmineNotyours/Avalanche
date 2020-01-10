@@ -3,14 +3,18 @@ var canvas = document.getElementById('canvas');
 // if (canvas.getContext) {}
 var ctx = canvas.getContext('2d');
 ctx.font = '48px serif';
-var time = 100000; // Rough time delay
-var height = 10;
+// function frame(){
+//   update();
+//   render();
+//   requestAnimationFrame(frame);
+// }
+var height = 70;
 var left = 2; // Not followed throughout.  Kept for compatibility
-var width = 6;
+var width = 90;
 var symbols = 3;
-var size = 30; // Pixel size
+var size = 8; // Pixel size
 // declare multi-dimensional array board, per MDN Indexed Collections
-var rows = 5; // height of prefill board
+var rows = 55; // height of prefill board
 var x = 0; // x location of piece
 var y = 0; // y location of piece
 var x1 = 0; // provisional x Location of piece
@@ -61,6 +65,7 @@ ctx.fillRect(((left + (width + 1)) * size), 0, size, (size * (height + 1)));
 
 // Prefill board
 function prefill(){
+  //document.addEventListener('keydown', processKeydown);
   //debugger;
   globalPrefillFlag = false;
   // Blank existing piece for manual new screen
@@ -70,6 +75,47 @@ function prefill(){
   var guess = 1; // Number of guesses it is taking to find a stable cell
 
   for (var i = left + 1; i <= width + 2; i++){
+    // for (var j = height - rows; j <= height; j+=3){ // Parkay version from this line to next commented block
+
+    //   if (i%3 == 0){
+    //       board[i][j] = 3;
+    //       ctx.fillStyle = 'blue';
+    //       ctx.fillRect(i * size, j * size, size - 1, size - 1);
+    //       board[i][j+1] = 1;
+    //       ctx.fillStyle = 'red';
+    //       ctx.fillRect(i * size, (j+1) * size, size - 1, size - 1);
+    //       board[i][j+2] = 1;
+    //       ctx.fillRect(i * size, (j+2) * size, size - 1, size - 1);
+    //   }else if ((i+1)%3 == 0){
+    //       board[i][j] = 1;
+    //       ctx.fillStyle = 'red';
+    //       ctx.fillRect(i * size, j * size, size - 1, size - 1);
+    //       board[i][j+1] = 2;
+    //       ctx.fillStyle = 'green';
+    //       ctx.fillRect(i * size, (j+1) * size, size - 1, size - 1);
+    //       board[i][j+2] = 2;
+    //       ctx.fillRect(i * size, (j+2) * size, size - 1, size - 1);
+    //   }else{
+    //       board[i][j] = 1;
+    //       ctx.fillStyle = 'red';
+    //       ctx.fillRect(i * size, j * size, size - 1, size - 1);
+    //       if ((Math.floor(Math.random() * 2) + 1)==1)
+    //       {
+    //         board[i][j+1] = 3;
+    //         ctx.fillStyle = 'blue';
+    //         ctx.fillRect(i * size, (j+1) * size, size - 1, size - 1);
+    //       } else {
+    //         board[i][j+1] = 2;
+    //         ctx.fillStyle = 'green';
+    //         ctx.fillRect(i * size, (j+1) * size, size - 1, size - 1);
+
+    //       }
+    //       board[i][j+2] = 2;
+    //       ctx.fillStyle = 'green';
+    //       ctx.fillRect(i * size, (j+2) * size, size - 1, size - 1);
+  
+    //   }
+
     for (var j = height - rows; j <= height; j++){
       var cycle = 0;
       var flag = true;
@@ -79,6 +125,7 @@ function prefill(){
         //  console.log('Top of while flag, cycle = ', cycle);
         if (cycle > 10){
           guess++;
+          console.log('Incrementing guess, ', guess);
           i--; // Yes, I'm decrementing the loop counter
           //  console.log('decrementing i: ', i);
           cycle = 0;
@@ -123,24 +170,25 @@ function prefill(){
         // 640 if array(i - 1, j + 1) = candidate then if array(i - 2, j + 2) = candidate then flag = 1 : rem same symbol diag left & down
       //  console.log('At end of while flag loop: flag=', flag);
       } // wend flag
-      // Now that we have a viable candidate, set the color:
-      switch (candidate){
-      case 1:
-        ctx.fillStyle = 'red';
-        break;
-      case 2:
-        ctx.fillStyle = 'green';
-        break;
-      case 3:
-        ctx.fillStyle = 'blue';
-        break;
-      }
-      ctx.fillRect(i * size, j * size, size - 1, size - 1);
+      // // Now that we have a viable candidate, set the color:
+      // switch (candidate){
+      // case 1:
+      //   ctx.fillStyle = 'red';
+      //   break;
+      // case 2:
+      //   ctx.fillStyle = 'green';
+      //   break;
+      // case 3:
+      //   ctx.fillStyle = 'blue';
+      //   break;
+      // }
+      // ctx.fillRect(i * size, j * size, size - 1, size - 1);
+
+      displayCell(i, j, candidate);
+
+      //ctx.stroke();
       board[i] [j] = candidate;
-    //  console.log('i, j, candidate', i, j, candidate);
-      // ctx.fillRect(0, 0, 50, 50);
-      // ctx.fillStyle = 'rgba(0, 0, 200, 0.5)';
-      // ctx.fillRect(30, 30, 50, 50);
+    
     } // Next j
   } // Next i
 }
@@ -158,7 +206,7 @@ function pickShape(){
     nShape[s] = Math.floor(Math.random() * symbols) + 1;
     console.log('In pickShape, s, nShape ', s, nShape);
 
-    //shape[s] = nShape;
+    shape[s] = nShape;
   }
 }
 
@@ -173,29 +221,32 @@ makeTurn();
 function preTurn(){
   // Set initial position of piece on top of field
   x = left + Math.floor(width / 2);
-  y = 0;
+  y = 5; // move down to pad top of field
   // Copy next shape to current shape
 
   shape = nShape;
-  console.log('copying from nShape: s, shape[s] ', s, shape[s]);
+  // console.log('copying from nShape: s, shape[s] ', s, shape[s]);
 
   // Pick next next shape
   for (var s = 0; s <= 2; s++){
     nShape[s] = Math.floor(Math.random() * symbols) + 1;
     // Set the color:
-    switch (nShape[s]){
-    case 1:
-      ctx.fillStyle = 'red';
-      break;
-    case 2:
-      ctx.fillStyle = 'green';
-      break;
-    case 3:
-      ctx.fillStyle = 'blue';
-      break;
-    }
-    // Draw the shape in next window
-    ctx.fillRect((width + 5) * size, (y + s) * size, size - 1, size - 1);
+    // switch (nShape[s]){
+    // case 1:
+    //   ctx.fillStyle = 'red';
+    //   break;
+    // case 2:
+    //   ctx.fillStyle = 'green';
+    //   break;
+    // case 3:
+    //   ctx.fillStyle = 'blue';
+    //   break;
+    // }
+    // // Draw the shape in next window
+    // ctx.fillRect((width + 5) * size, (y + s) * size, size - 1, size - 1);
+
+    displayCell(x, y+s, nShape[s]);
+
   //  console.log('In pick next next, s, nShape[s]: ', s, nShape[s]);
   } // next s, end pick next next shape
   var bot = 0;
@@ -209,20 +260,23 @@ function preTurn(){
   // Draw initial shape
   for (var s = 0; s <= 2; s++){
     //  console.log('In draw initial shape, s, shape[s]', s, shape);
-    // Set the color:
-    switch (shape[s]){
-    case 1:
-      ctx.fillStyle = 'red';
-      break;
-    case 2:
-      ctx.fillStyle = 'green';
-      break;
-    case 3:
-      ctx.fillStyle = 'blue';
-      break;
-    }
-    // Draw the shape
-    ctx.fillRect((x) * size, (y + s) * size, size - 1, size - 1);
+    // // Set the color:
+    // switch (shape[s]){
+    // case 1:
+    //   ctx.fillStyle = 'red';
+    //   break;
+    // case 2:
+    //   ctx.fillStyle = 'green';
+    //   break;
+    // case 3:
+    //   ctx.fillStyle = 'blue';
+    //   break;
+    // }
+    // // Draw the shape
+    // ctx.fillRect((x) * size, (y + s) * size, size - 1, size - 1);
+
+    displayCell(x, y+s, shape[s]);
+
   }
 
 }
@@ -302,20 +356,22 @@ function movePiece(){
   // Draw shape at new location
   for (var s = 0; s <= 2; s++){
     //console.log('In draw shape at new location, s, shape[s], x1, y1, x, y ', s, shape[s], x1, y1, x, y);
-    // Set the color:
-    switch (shape[s]){
-    case 1:
-      ctx.fillStyle = 'red';
-      break;
-    case 2:
-      ctx.fillStyle = 'green';
-      break;
-    case 3:
-      ctx.fillStyle = 'blue';
-      break;
-    }
-    // Draw the shape
-    ctx.fillRect((x) * size, (y + s) * size, size - 1, size - 1);
+    // // Set the color:
+    // switch (shape[s]){
+    // case 1:
+    //   ctx.fillStyle = 'red';
+    //   break;
+    // case 2:
+    //   ctx.fillStyle = 'green';
+    //   break;
+    // case 3:
+    //   ctx.fillStyle = 'blue';
+    //   break;
+    // }
+    // // Draw the shape
+    // ctx.fillRect((x) * size, (y + s) * size, size - 1, size - 1);
+
+    displayCell(x, y+s, shape[s]);
   }
 }
 function rotate(){
@@ -326,24 +382,27 @@ function rotate(){
   // Draw shape
   for (var s = 0; s <= 2; s++){
     //console.log('In rotate, s, shape[s], x1, y1, x, y ', s, shape[s], x1, y1, x, y);
-    // Set the color:
-    switch (shape[s]){
-    case 1:
-      ctx.fillStyle = 'red';
-      break;
-    case 2:
-      ctx.fillStyle = 'green';
-      break;
-    case 3:
-      ctx.fillStyle = 'blue';
-      break;
-    }
-    // Draw the shape
-    ctx.fillRect((x) * size, (y + s) * size, size - 1, size - 1);
+    // // Set the color:
+    // switch (shape[s]){
+    // case 1:
+    //   ctx.fillStyle = 'red';
+    //   break;
+    // case 2:
+    //   ctx.fillStyle = 'green';
+    //   break;
+    // case 3:
+    //   ctx.fillStyle = 'blue';
+    //   break;
+    // }
+    // // Draw the shape
+    // ctx.fillRect((x) * size, (y + s) * size, size - 1, size - 1);
+
+    displayCell(x, y+s, shape[s]);
   }
 }
 
 function checkField(){
+  console.log('At top of checkField')
   // Add piece to board
   for (var s = 0; s <= 2; s++){
     board[x] [y + s] = shape[s];
@@ -433,11 +492,12 @@ function checkField(){
       for(var j = 2; j <= height; j++){
         for(var i = left + 1; i <= width + 2; i++){
           if(check[i] [j]){
-            ctx.fillStyle = 'white';
+            ctx.fillStyle = 'magenta';
             ctx.fillRect((i) * size, (j) * size, size - 1, size - 1);
           }
         } // next i
       } // next j
+      //requestAnimationFrame(frame);
     }
 
     function blinkOn(){
@@ -459,25 +519,36 @@ function checkField(){
               ctx.fillStyle = 'blue';
               break;
             }
-          }
+          } //switch
+          ctx.fillRect((i) * size, (j) * size, size - 1, size - 1); 
         } // next i
       } // next j
-      ctx.fillRect((i) * size, (j) * size, size - 1, size - 1);
+      //requestAnimationFrame(frame);
+
     }
 
-    for(var blink = 0; blink <= 1; blink++){
-    //  blinkOff();
-      setTimeout(function(){console.log('This is where blinkon is supposed to be');}, 2000);
-      setTimeout(function(){blinkOn();}, 500);
-      setTimeout(function(){blinkOff();}, 500);
-      setTimeout(blinkOn(), 500); // blinkOff and blinkOn get called multiple times, but there is no delay
-      // Functions are called, but there is no delay because they were simply called one after the other.  The function that collapses and redraws the board used to execute without delay.  That function needs to be called after a delay.  That function executes below; now a separate function.
+    //console.log('blinkOff/blinkOn procedure');
+    for(var blink = 0; blink <= 0; blink++){
+      //window.requestAnimationFrame(blinkOff);
+      // var d = new Date(); // Alternative to using setTimeout
+      // while (d + 5 > Date()){}
+
+      //window.requestAnimationFrame(redraw);
+      // var d = new Date();
+      // while (d + 10 > Date()){}
+      blinkOff();
+      // var d = new Date();
+      // while (d + 10 > Date()){}
+      //blinkOn(); 
+
     } // next blink
 
-    console.log('About to call setTimeout(collapse) with delay of 1000');
-    setTimeout(function(){collapse();},1000); 
-    //console.log('Calling collapse directly, without delay');
-    collapse(); // this gives results that I didn't have before it was spun into its own function.  There is an infinite loop.
+    //redraw();
+
+    // document.addEventListener('keydown',empty() );
+    console.log('About to call collapse'); //breakpoint here to illustrate each step of collapse animation.
+    collapse();
+    //window.requestAnimationFrame(collapse);
 
     // check for end of screen here, if option chosen
     // if check(2 + int(width/2) ,height) then goto 460 (prefill board)
@@ -490,32 +561,33 @@ function collapse() {
   // Remove cells from board
   // 2500 for i = 3 to width + 2
   for(var i = left + 1; i <= width + 2; i++){
-    //debugger;
     // 2505 offset = 0
     var offset = 0;
     // 2510 for j = height to 2 step -1
-    for(j = height; j >= 0; j--){ // still freezes here, later in the game
+    for(j = height; j >= 0; j--){
       // console.log('Top of collapse i, j, board [i][j]: ', i, j, board[i][j]);
       // 2520 if not check(i,j) then array(i, j + offset) = array(i, j) : color= array(i, j): plot i, j + offset
       if(!check[i] [j]){
         // console.log('!check triggered: i, j, check[i][j], offset', i, j, check[i][j], offset);
         board[i] [j + offset] = board[i] [j];
-        switch (board[i] [j]){
-        case 0:
-          ctx.fillStyle = 'RGB(255, 251, 202)' ; // offwhite for debugging.  Return to 'white' or whatever the background is
-          break;
-        case 1:
-          ctx.fillStyle = 'red';
-          break;
-        case 2:
-          ctx.fillStyle = 'green';
-          break;
-        case 3:
-          ctx.fillStyle = 'blue';
-          break;
-        } // Switch
-        ctx.fillRect(i * size, (j + offset) * size, size - 1, size - 1);
-        ctx.fillText(offset, i * size + ((width + 5) * size), ((j + offset) * size)); // Temp code.  Remove after debugging
+        // switch (board[i] [j]){
+        // case 0:
+        //   ctx.fillStyle = 'RGB(255, 251, 202, 0.9)' ; // offwhite for debugging.  Return to 'white' or whatever the background is
+        //   break;
+        // case 1:
+        //   ctx.fillStyle = 'red';
+        //   break;
+        // case 2:
+        //   ctx.fillStyle = 'green';
+        //   break;
+        // case 3:
+        //   ctx.fillStyle = 'blue';
+        //   break;
+        // } // Switch
+        // ctx.fillRect(i * size, (j + offset) * size, size - 1, size - 1);
+
+        displayCell(i, j + offset, board[i] [j]);
+        //ctx.fillText(offset, i * size + ((width + 5) * size), ((j + offset) * size)); // Temp code.  Remove after debugging
       } // Endif not check 
  
       // This should be an else, after if not check.  Check brackets.
@@ -534,6 +606,8 @@ function collapse() {
         // There could be cells to be blanked above the reach of j + offset, so this clears them from screen, but not from board[][]?
       ctx.fillStyle = 'RGB(255, 251, 202)' ; // offwhite for debugging.  Return to 'white' or whatever the background is
       ctx.fillRect(i * size, (l) * size, size - 1, size - 1);
+
+      // displayCell(i, j, );
       // ctx.fillText(l, i * size + ((width + 5) * size), ((l) * size)); // Temp code.  Remove after debugging
     } // next l
   } // end if offset > 0
@@ -567,3 +641,23 @@ function redraw()
     } // next j
   } // next i
 } // redraw
+
+function displayCell(i, j, color)
+{
+  switch (color){
+    case 0:
+      ctx.fillStyle = 'RGB(255, 251, 202, 0.9)' ; // offwhite for debugging.  Return to 'white' or whatever the background is
+      break;
+    case 1:
+      ctx.fillStyle = 'red';
+      break;
+    case 2:
+      ctx.fillStyle = 'green';
+      break;
+    case 3:
+      ctx.fillStyle = 'blue';
+      break;
+    } // Switch
+    ctx.fillRect(i * size, j * size, size - 1, size - 1);
+
+} // displayCell
