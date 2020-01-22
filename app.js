@@ -8,13 +8,13 @@ ctx.font = '48px serif';
 //   render();
 //   requestAnimationFrame(frame);
 // }
-var height = 70;
+var height = 75;
 var left = 2; // Not followed throughout.  Kept for compatibility
 var width = 90;
 var symbols = 3;
 var size = 8; // Pixel size
 // declare multi-dimensional array board, per MDN Indexed Collections
-var rows = 55; // height of prefill board
+var rows = 57; // height of prefill board
 var x = 0; // x location of piece
 var y = 0; // y location of piece
 var x1 = 0; // provisional x Location of piece
@@ -65,16 +65,24 @@ ctx.fillRect(((left + (width + 1)) * size), 0, size, (size * (height + 1)));
 
 // Prefill board
 function prefill(){
-  //document.addEventListener('keydown', processKeydown);
-  //debugger;
   globalPrefillFlag = false;
   // Blank existing piece for manual new screen
   ctx.fillStyle = 'white';
   ctx.fillRect((x1 * size), (y1 * size), size - 1, (3 * size) - 1);
   var candidate = 0;
   var guess = 1; // Number of guesses it is taking to find a stable cell
+  // redraw();
 
-  for (var i = left + 1; i <= width + 2; i++){
+  //for (var i = left + 1; i <= width + 2; i++){ // Previously used logic
+
+  var i = left;
+  setInterval(innerFill, 0); // Necessary for giving breaks in thread for graphics to display.
+
+  function innerFill(){
+    if (i > width + 1)
+      {return}
+    i++
+
     // for (var j = height - rows; j <= height; j+=3){ // Parkay version from this line to next commented block
 
     //   if (i%3 == 0){
@@ -119,7 +127,8 @@ function prefill(){
     for (var j = height - rows; j <= height; j++){
       var cycle = 0;
       var flag = true;
-      while (flag) {
+      while (flag)  
+      {
         flag = false;
         cycle++;
         //  console.log('Top of while flag, cycle = ', cycle);
@@ -184,14 +193,16 @@ function prefill(){
       // }
       // ctx.fillRect(i * size, j * size, size - 1, size - 1);
 
-      displayCell(i, j, candidate);
+
+        displayCell(i, j, candidate);
 
       //ctx.stroke();
       board[i] [j] = candidate;
     
     } // Next j
-  } // Next i
-}
+  } // innerFill
+} // prefill
+
 var globalPrefillFlag = true;
 // It's possible that the function prefill will be so unable to find a stable board with no three in a row that it will have to start over again.  globalPrefillFlag helps do this.
 while (globalPrefillFlag){
@@ -206,7 +217,7 @@ function pickShape(){
     nShape[s] = Math.floor(Math.random() * symbols) + 1;
     console.log('In pickShape, s, nShape ', s, nShape);
 
-    shape[s] = nShape;
+    shape[s] = nShape[s];
   }
 }
 
@@ -216,7 +227,7 @@ pickShape(); // Pick shape for initial Next window
 
 // Move Piece.  Piece moves when commanded, or moves down after a certain amount of time.  If a downward move is blocked, call Check Field.
 
-makeTurn();
+makeTurn(); // move this call to the logic for the end of preFill so gameplay won't start until that's done.
 
 function preTurn(){
   // Set initial position of piece on top of field
@@ -245,7 +256,7 @@ function preTurn(){
     // // Draw the shape in next window
     // ctx.fillRect((width + 5) * size, (y + s) * size, size - 1, size - 1);
 
-    displayCell(x, y+s, nShape[s]);
+    displayCell(width + 5, y+s, nShape[s]);
 
   //  console.log('In pick next next, s, nShape[s]: ', s, nShape[s]);
   } // next s, end pick next next shape
@@ -409,11 +420,17 @@ function checkField(){
   }
 
   var found = true;
-  while (found){
+
+  var checkID = setInterval(innerCheck, 500);
+
+  return;
+
+  // while (found)
+  function innerCheck()
+  {
     found = false;
 
     // Reinitialize check
-    // var check = new Array(width + 6);
     check = new Array(width + 6);
     for (var i = 0; i <= (width + 6); i++){
       check[i] = new Array(height + 3);
@@ -427,7 +444,6 @@ function checkField(){
       for (var i = left + 1; i <= width + 2; i++){
         if(board[i] [j] != 0){ // Skip dead cells
           //console.log('Inside three in a row, i, j, board[i] [j], found ', i, j, board[i] [j], found);
-          //debugger;
 
           // Check horizontal
           // if array(i, j) = array(i - 1, j) and array(i, j) = array(i + 1, j) then check(i - 1, j) = 1 : check(i, j) = 1 : check(i + 1, j) =1 : found = 1
@@ -482,6 +498,7 @@ function checkField(){
     console.log('dead, nowDead ', dead, nowDead);
 
     if(!found){
+      clearInterval(checkID);
       preTurn();
       return;
     }
@@ -498,34 +515,36 @@ function checkField(){
         } // next i
       } // next j
       //requestAnimationFrame(frame);
-    }
+    } // blinkOff
 
     function blinkOn(){
       console.log('blinkOn');
       for(var j = 2; j <= height; j++){
         for(var i = left + 1; i <= width + 2; i++){
-          if(check[i] [j]){
-            switch (board[i] [j]){
-            case 0:
-              ctx.fillStyle = 'white';
-              break;
-            case 1:
-              ctx.fillStyle = 'red';
-              break;
-            case 2:
-              ctx.fillStyle = 'green';
-              break;
-            case 3:
-              ctx.fillStyle = 'blue';
-              break;
-            }
-          } //switch
-          ctx.fillRect((i) * size, (j) * size, size - 1, size - 1); 
+          // if(check[i] [j]){
+          //   switch (board[i] [j]){
+          //   case 0:
+          //     ctx.fillStyle = 'white';
+          //     break;
+          //   case 1:
+          //     ctx.fillStyle = 'red';
+          //     break;
+          //   case 2:
+          //     ctx.fillStyle = 'green';
+          //     break;
+          //   case 3:
+          //     ctx.fillStyle = 'blue';
+          //     break;
+          //   }
+          // } //switch
+          // ctx.fillRect((i) * size, (j) * size, size - 1, size - 1); 
+
+          displayCell(i, j, board[i] [j]);
         } // next i
       } // next j
       //requestAnimationFrame(frame);
 
-    }
+    } // blinkOn
 
     //console.log('blinkOff/blinkOn procedure');
     for(var blink = 0; blink <= 0; blink++){
@@ -546,14 +565,16 @@ function checkField(){
     //redraw();
 
     // document.addEventListener('keydown',empty() );
+
     console.log('About to call collapse'); //breakpoint here to illustrate each step of collapse animation.
-    collapse();
+    setTimeout(collapse, 100);
+    // blinkOff();
+    // setTimeout(collapse, 0);
     //window.requestAnimationFrame(collapse);
 
     // check for end of screen here, if option chosen
     // if check(2 + int(width/2) ,height) then goto 460 (prefill board)
-
-  } // wend found
+  } // innerCheck
 } // checkField
 
 function collapse() {
@@ -621,25 +642,28 @@ function redraw()
   for (var i = left + 1; i <= width + 2; i++){
     for (var j = height - rows; j <= height; j++){
       console.log('i ' + i + ' j ' + j + ' board [i] [j] ' + board [i] [j]);
-      switch (board[i] [j]){
-      case 0:
-        ctx.fillStyle = 'white';
-        break;
-      case 1:
-        ctx.fillStyle = 'red';
-        break;
-      case 2:
-        ctx.fillStyle = 'green';
-        break;
-      case 3:
-        ctx.fillStyle = 'blue';
-        break;
-      }
+      // switch (board[i] [j]){
+      // case 0:
+      //   ctx.fillStyle = 'white';
+      //   break;
+      // case 1:
+      //   ctx.fillStyle = 'red';
+      //   break;
+      // case 2:
+      //   ctx.fillStyle = 'green';
+      //   break;
+      // case 3:
+      //   ctx.fillStyle = 'blue';
+      //   break;
+      // }
 
-      ctx.fillRect(i * size, j * size, size - 1, size - 1);
+      // ctx.fillRect(i * size, j * size, size - 1, size - 1);
+
+      displayCell(i, j, board[i] [j]);
 
     } // next j
   } // next i
+  // requestAnimationFrame(redraw);
 } // redraw
 
 function displayCell(i, j, color)
