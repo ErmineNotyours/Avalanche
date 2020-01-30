@@ -8,13 +8,18 @@ ctx.font = '48px serif';
 //   render();
 //   requestAnimationFrame(frame);
 // }
-var height = 75;
+var checkID; // used to kill the interval for animating collapse
+var moveID; // used to kill the interval for progressing the piece down
+var setID; // used to kill the interval for animating the prefill population.
+var bypass = false;
+var height = 75; // total hight of field
+var rows = 55; // height of prefill board
 var left = 2; // Not followed throughout.  Kept for compatibility
 var width = 90;
 var symbols = 3;
+var move = true; // disables keyboard control during collapse
 var size = 8; // Pixel size
 // declare multi-dimensional array board, per MDN Indexed Collections
-var rows = 57; // height of prefill board
 var x = 0; // x location of piece
 var y = 0; // y location of piece
 var x1 = 0; // provisional x Location of piece
@@ -64,7 +69,8 @@ ctx.fillRect(((left + (width + 1)) * size), 0, size, (size * (height + 1)));
 // Here in original version is where you would mark the center bottom of the board for the option of moving on to the next round
 
 // Prefill board
-function prefill(){
+function prefill()
+{
   globalPrefillFlag = false;
   // Blank existing piece for manual new screen
   ctx.fillStyle = 'white';
@@ -76,53 +82,60 @@ function prefill(){
   //for (var i = left + 1; i <= width + 2; i++){ // Previously used logic
 
   var i = left;
-  setInterval(innerFill, 0); // Necessary for giving breaks in thread for graphics to display.
+  var setID = setInterval(innerFill, 0); // Necessary for giving breaks in thread for graphics to display.
 
   function innerFill(){
     if (i > width + 1)
-      {return}
+      {
+        clearInterval(setID);
+        makeTurn();
+        return
+      }
     i++
+    function parkay()
+    {
+      for (var j = height - rows; j <= height; j+=3){ 
 
-    // for (var j = height - rows; j <= height; j+=3){ // Parkay version from this line to next commented block
+        if (i%3 == 0){
+            board[i][j] = 3;
+            ctx.fillStyle = 'blue';
+            ctx.fillRect(i * size, j * size, size - 1, size - 1);
+            board[i][j+1] = 1;
+            ctx.fillStyle = 'red';
+            ctx.fillRect(i * size, (j+1) * size, size - 1, size - 1);
+            board[i][j+2] = 1;
+            ctx.fillRect(i * size, (j+2) * size, size - 1, size - 1);
+        }else if ((i+1)%3 == 0){
+            board[i][j] = 1;
+            ctx.fillStyle = 'red';
+            ctx.fillRect(i * size, j * size, size - 1, size - 1);
+            board[i][j+1] = 2;
+            ctx.fillStyle = 'green';
+            ctx.fillRect(i * size, (j+1) * size, size - 1, size - 1);
+            board[i][j+2] = 2;
+            ctx.fillRect(i * size, (j+2) * size, size - 1, size - 1);
+        }else{
+            board[i][j] = 1;
+            ctx.fillStyle = 'red';
+            ctx.fillRect(i * size, j * size, size - 1, size - 1);
+            if ((Math.floor(Math.random() * 2) + 1)==1)
+            {
+              board[i][j+1] = 3;
+              ctx.fillStyle = 'blue';
+              ctx.fillRect(i * size, (j+1) * size, size - 1, size - 1);
+            } else {
+              board[i][j+1] = 2;
+              ctx.fillStyle = 'green';
+              ctx.fillRect(i * size, (j+1) * size, size - 1, size - 1);
 
-    //   if (i%3 == 0){
-    //       board[i][j] = 3;
-    //       ctx.fillStyle = 'blue';
-    //       ctx.fillRect(i * size, j * size, size - 1, size - 1);
-    //       board[i][j+1] = 1;
-    //       ctx.fillStyle = 'red';
-    //       ctx.fillRect(i * size, (j+1) * size, size - 1, size - 1);
-    //       board[i][j+2] = 1;
-    //       ctx.fillRect(i * size, (j+2) * size, size - 1, size - 1);
-    //   }else if ((i+1)%3 == 0){
-    //       board[i][j] = 1;
-    //       ctx.fillStyle = 'red';
-    //       ctx.fillRect(i * size, j * size, size - 1, size - 1);
-    //       board[i][j+1] = 2;
-    //       ctx.fillStyle = 'green';
-    //       ctx.fillRect(i * size, (j+1) * size, size - 1, size - 1);
-    //       board[i][j+2] = 2;
-    //       ctx.fillRect(i * size, (j+2) * size, size - 1, size - 1);
-    //   }else{
-    //       board[i][j] = 1;
-    //       ctx.fillStyle = 'red';
-    //       ctx.fillRect(i * size, j * size, size - 1, size - 1);
-    //       if ((Math.floor(Math.random() * 2) + 1)==1)
-    //       {
-    //         board[i][j+1] = 3;
-    //         ctx.fillStyle = 'blue';
-    //         ctx.fillRect(i * size, (j+1) * size, size - 1, size - 1);
-    //       } else {
-    //         board[i][j+1] = 2;
-    //         ctx.fillStyle = 'green';
-    //         ctx.fillRect(i * size, (j+1) * size, size - 1, size - 1);
-
-    //       }
-    //       board[i][j+2] = 2;
-    //       ctx.fillStyle = 'green';
-    //       ctx.fillRect(i * size, (j+2) * size, size - 1, size - 1);
-  
-    //   }
+            }
+            board[i][j+2] = 2;
+            ctx.fillStyle = 'green';
+            ctx.fillRect(i * size, (j+2) * size, size - 1, size - 1);
+    
+        }
+      }
+    } // parkay
 
     for (var j = height - rows; j <= height; j++){
       var cycle = 0;
@@ -134,7 +147,7 @@ function prefill(){
         //  console.log('Top of while flag, cycle = ', cycle);
         if (cycle > 10){
           guess++;
-          console.log('Incrementing guess, ', guess);
+          console.log('Incrementing guess, i ', guess, width+1-i);
           i--; // Yes, I'm decrementing the loop counter
           //  console.log('decrementing i: ', i);
           cycle = 0;
@@ -179,24 +192,9 @@ function prefill(){
         // 640 if array(i - 1, j + 1) = candidate then if array(i - 2, j + 2) = candidate then flag = 1 : rem same symbol diag left & down
       //  console.log('At end of while flag loop: flag=', flag);
       } // wend flag
-      // // Now that we have a viable candidate, set the color:
-      // switch (candidate){
-      // case 1:
-      //   ctx.fillStyle = 'red';
-      //   break;
-      // case 2:
-      //   ctx.fillStyle = 'green';
-      //   break;
-      // case 3:
-      //   ctx.fillStyle = 'blue';
-      //   break;
-      // }
-      // ctx.fillRect(i * size, j * size, size - 1, size - 1);
 
+      displayCell(i, j, candidate);
 
-        displayCell(i, j, candidate);
-
-      //ctx.stroke();
       board[i] [j] = candidate;
     
     } // Next j
@@ -217,7 +215,7 @@ function pickShape(){
     nShape[s] = Math.floor(Math.random() * symbols) + 1;
     console.log('In pickShape, s, nShape ', s, nShape);
 
-    shape[s] = nShape[s];
+    //shape[s] = nShape[s];
   }
 }
 
@@ -227,39 +225,23 @@ pickShape(); // Pick shape for initial Next window
 
 // Move Piece.  Piece moves when commanded, or moves down after a certain amount of time.  If a downward move is blocked, call Check Field.
 
-makeTurn(); // move this call to the logic for the end of preFill so gameplay won't start until that's done.
+// makeTurn(); // Old location. Moved to the logic for the end of preFill so gameplay won't start until that's done.
 
 function preTurn(){
   // Set initial position of piece on top of field
   x = left + Math.floor(width / 2);
   y = 5; // move down to pad top of field
   // Copy next shape to current shape
-
-  shape = nShape;
-  // console.log('copying from nShape: s, shape[s] ', s, shape[s]);
-
+  shape = nShape.slice();
   // Pick next next shape
   for (var s = 0; s <= 2; s++){
     nShape[s] = Math.floor(Math.random() * symbols) + 1;
-    // Set the color:
-    // switch (nShape[s]){
-    // case 1:
-    //   ctx.fillStyle = 'red';
-    //   break;
-    // case 2:
-    //   ctx.fillStyle = 'green';
-    //   break;
-    // case 3:
-    //   ctx.fillStyle = 'blue';
-    //   break;
-    // }
-    // // Draw the shape in next window
-    // ctx.fillRect((width + 5) * size, (y + s) * size, size - 1, size - 1);
 
     displayCell(width + 5, y+s, nShape[s]);
 
   //  console.log('In pick next next, s, nShape[s]: ', s, nShape[s]);
   } // next s, end pick next next shape
+
   var bot = 0;
   var drop = 0;
 
@@ -271,20 +253,6 @@ function preTurn(){
   // Draw initial shape
   for (var s = 0; s <= 2; s++){
     //  console.log('In draw initial shape, s, shape[s]', s, shape);
-    // // Set the color:
-    // switch (shape[s]){
-    // case 1:
-    //   ctx.fillStyle = 'red';
-    //   break;
-    // case 2:
-    //   ctx.fillStyle = 'green';
-    //   break;
-    // case 3:
-    //   ctx.fillStyle = 'blue';
-    //   break;
-    // }
-    // // Draw the shape
-    // ctx.fillRect((x) * size, (y + s) * size, size - 1, size - 1);
 
     displayCell(x, y+s, shape[s]);
 
@@ -295,15 +263,12 @@ function preTurn(){
 function makeTurn(){
   preTurn();
   document.addEventListener('keydown', processKeydown);
-  //window.requestAnimationFrame(empty);
   // Make move loop.  Turn on event listeners.
-  setTimeout(movePieceDown(), 1000);
-  // Pause one second
-  // Works once only.
+  moveID = setInterval(movePieceDown, 1000); // clearInterval in checkField (350).
 } // end makeTurn
 
 function processKeydown(ev){
-  event.preventDefault();
+  event.preventDefault(); // Should this be ev.preventDefault(); ?
   //console.log('In processKeydown, ev = ', ev, ev.code);
 
   switch(ev.code){
@@ -314,7 +279,8 @@ function processKeydown(ev){
     movePieceRight();
     break;
   case 'ArrowDown':
-    movePieceDown();
+    if (move)
+    {movePieceDown();}
     break;
   case 'Space':
     rotate();
@@ -363,24 +329,10 @@ function movePiece(){
   } // end if
   // Erase shape at old location
   ctx.fillStyle = 'white';
-  ctx.fillRect(x1 * size, y1 * size, size - 1, size * 3);
+  ctx.fillRect(x1 * size, y1 * size, size - 1, size * 3); // Clears three vertical blocks at once
   // Draw shape at new location
   for (var s = 0; s <= 2; s++){
     //console.log('In draw shape at new location, s, shape[s], x1, y1, x, y ', s, shape[s], x1, y1, x, y);
-    // // Set the color:
-    // switch (shape[s]){
-    // case 1:
-    //   ctx.fillStyle = 'red';
-    //   break;
-    // case 2:
-    //   ctx.fillStyle = 'green';
-    //   break;
-    // case 3:
-    //   ctx.fillStyle = 'blue';
-    //   break;
-    // }
-    // // Draw the shape
-    // ctx.fillRect((x) * size, (y + s) * size, size - 1, size - 1);
 
     displayCell(x, y+s, shape[s]);
   }
@@ -393,20 +345,6 @@ function rotate(){
   // Draw shape
   for (var s = 0; s <= 2; s++){
     //console.log('In rotate, s, shape[s], x1, y1, x, y ', s, shape[s], x1, y1, x, y);
-    // // Set the color:
-    // switch (shape[s]){
-    // case 1:
-    //   ctx.fillStyle = 'red';
-    //   break;
-    // case 2:
-    //   ctx.fillStyle = 'green';
-    //   break;
-    // case 3:
-    //   ctx.fillStyle = 'blue';
-    //   break;
-    // }
-    // // Draw the shape
-    // ctx.fillRect((x) * size, (y + s) * size, size - 1, size - 1);
 
     displayCell(x, y+s, shape[s]);
   }
@@ -414,29 +352,31 @@ function rotate(){
 
 function checkField(){
   console.log('At top of checkField')
-  // Add piece to board
-  for (var s = 0; s <= 2; s++){
-    board[x] [y + s] = shape[s];
-  }
-
+  clearInterval(moveID); // Kills process created in makeTurn (263)
+  move = false; // disables keyboard control
   var found = true;
 
-  var checkID = setInterval(innerCheck, 500);
+  // Place shape onto board.  (Bypass this when single cell removed with mouse, when bypass will be set to true)
+  if (!bypass)
+  {
+    for (var s = 0; s <= 2; s++){
+      board[x] [y + s] = shape[s];
+    }
+  }
+
+  var checkID = setInterval(innerCheck, 500); // interval time set to display blinkOff.  See setTimeout call to collapse at end of innerCheck
 
   return;
 
-  // while (found)
+  // while (found) // Control moved to later in function to allow animation
   function innerCheck()
   {
     found = false;
 
-    // Reinitialize check
-    check = new Array(width + 6);
-    for (var i = 0; i <= (width + 6); i++){
-      check[i] = new Array(height + 3);
-      for (var j = 0; j <= (height + 3); j++){
-        check[i] [j] = false;
-      }
+    if (bypass) // trigger collapse on mouse hit
+    {
+      found = true;
+      bypass = false;
     }
 
     // Check for three in a row
@@ -499,7 +439,9 @@ function checkField(){
 
     if(!found){
       clearInterval(checkID);
-      preTurn();
+      // preTurn(); // when this option is chosen at the exclusion of the next line, subsequent pieces don't progress down.
+      move = true; // Resume accepting keyboard input here.
+      makeTurn(); 
       return;
     }
 
@@ -514,63 +456,29 @@ function checkField(){
           }
         } // next i
       } // next j
-      //requestAnimationFrame(frame);
     } // blinkOff
 
     function blinkOn(){
       console.log('blinkOn');
       for(var j = 2; j <= height; j++){
         for(var i = left + 1; i <= width + 2; i++){
-          // if(check[i] [j]){
-          //   switch (board[i] [j]){
-          //   case 0:
-          //     ctx.fillStyle = 'white';
-          //     break;
-          //   case 1:
-          //     ctx.fillStyle = 'red';
-          //     break;
-          //   case 2:
-          //     ctx.fillStyle = 'green';
-          //     break;
-          //   case 3:
-          //     ctx.fillStyle = 'blue';
-          //     break;
-          //   }
-          // } //switch
-          // ctx.fillRect((i) * size, (j) * size, size - 1, size - 1); 
-
-          displayCell(i, j, board[i] [j]);
+          if(check[i] [j]){
+            displayCell(i, j, board[i] [j]);
+          }
         } // next i
       } // next j
-      //requestAnimationFrame(frame);
-
     } // blinkOn
 
     //console.log('blinkOff/blinkOn procedure');
     for(var blink = 0; blink <= 0; blink++){
-      //window.requestAnimationFrame(blinkOff);
-      // var d = new Date(); // Alternative to using setTimeout
-      // while (d + 5 > Date()){}
-
-      //window.requestAnimationFrame(redraw);
-      // var d = new Date();
-      // while (d + 10 > Date()){}
       blinkOff();
-      // var d = new Date();
-      // while (d + 10 > Date()){}
       //blinkOn(); 
 
     } // next blink
 
-    //redraw();
-
-    // document.addEventListener('keydown',empty() );
-
-    console.log('About to call collapse'); //breakpoint here to illustrate each step of collapse animation.
-    setTimeout(collapse, 100);
-    // blinkOff();
-    // setTimeout(collapse, 0);
-    //window.requestAnimationFrame(collapse);
+    console.log('About to call collapse'); 
+    // collapse();
+    setTimeout(collapse, 100); // Delay the actual collapse to allow blinkOff to fire.  Coordinates with setInterval near top of checkField.
 
     // check for end of screen here, if option chosen
     // if check(2 + int(width/2) ,height) then goto 460 (prefill board)
@@ -589,23 +497,8 @@ function collapse() {
       // console.log('Top of collapse i, j, board [i][j]: ', i, j, board[i][j]);
       // 2520 if not check(i,j) then array(i, j + offset) = array(i, j) : color= array(i, j): plot i, j + offset
       if(!check[i] [j]){
-        // console.log('!check triggered: i, j, check[i][j], offset', i, j, check[i][j], offset);
+        //console.log('!check triggered: i, j, check[i][j], offset', i, j, check[i][j], offset);
         board[i] [j + offset] = board[i] [j];
-        // switch (board[i] [j]){
-        // case 0:
-        //   ctx.fillStyle = 'RGB(255, 251, 202, 0.9)' ; // offwhite for debugging.  Return to 'white' or whatever the background is
-        //   break;
-        // case 1:
-        //   ctx.fillStyle = 'red';
-        //   break;
-        // case 2:
-        //   ctx.fillStyle = 'green';
-        //   break;
-        // case 3:
-        //   ctx.fillStyle = 'blue';
-        //   break;
-        // } // Switch
-        // ctx.fillRect(i * size, (j + offset) * size, size - 1, size - 1);
 
         displayCell(i, j + offset, board[i] [j]);
         //ctx.fillText(offset, i * size + ((width + 5) * size), ((j + offset) * size)); // Temp code.  Remove after debugging
@@ -614,24 +507,34 @@ function collapse() {
       // This should be an else, after if not check.  Check brackets.
       // Else should work, but use the following if statement for now
       // console.log('Before if check: i, j, check[i][j]', i, j, check[i][j]);
-      if (check[i] [j]){
-        //else{
+      if (check[i] [j] /*|| board[i] [j] == 0*/){ // checking for board == 0 designed to drop upper cells over blank cells.  Doesn't run unless something else triggers the search for dead cells.  Also lops off the highest cell in a column for each iteration of clearing the field due to below routine for ridding field beyond the reach of negative j+offset values
         // 2530 if check(i, j) then offset = offset + 1 :
         offset++;
         console.log('Collapse: offset incrementing, i, j, offset ', i, j, offset);
       } // endif check [i] [j]
     } // next j
-  } // next i
-  if (offset > 0){
-    for (var l = offset; l >= 0; l--){
-        // There could be cells to be blanked above the reach of j + offset, so this clears them from screen, but not from board[][]?
-      ctx.fillStyle = 'RGB(255, 251, 202)' ; // offwhite for debugging.  Return to 'white' or whatever the background is
-      ctx.fillRect(i * size, (l) * size, size - 1, size - 1);
+    if (offset > 0){
+      for (var l = offset; l > 0; l--){
+        // There could be cells to be blanked above the reach of j + offset, so this clears them from screen.
+        ctx.fillStyle = 'RGB(255, 251, 100)' ; // Yellow for debugging.  Return to 'white' or whatever the background is  
+        ctx.fillRect(i * size, (l) * size, size - 1, size - 1);
+        board[i] [l] = 0;
 
-      // displayCell(i, j, );
-      // ctx.fillText(l, i * size + ((width + 5) * size), ((l) * size)); // Temp code.  Remove after debugging
-    } // next l
+        // displayCell(i, j, );
+        // ctx.fillText(l, i * size + ((width + 5) * size), ((l) * size)); // Temp code.  Remove after debugging
+      } // next l
+    } // next i
   } // end if offset > 0
+  
+    // Reinitialize check
+    check = new Array(width + 6);
+    for (var i = 0; i <= (width + 6); i++){
+      check[i] = new Array(height + 3);
+      for (var j = 0; j <= (height + 3); j++){
+        check[i] [j] = false;
+      }
+    }
+
 } // end function collapse
 
 
@@ -642,28 +545,11 @@ function redraw()
   for (var i = left + 1; i <= width + 2; i++){
     for (var j = height - rows; j <= height; j++){
       console.log('i ' + i + ' j ' + j + ' board [i] [j] ' + board [i] [j]);
-      // switch (board[i] [j]){
-      // case 0:
-      //   ctx.fillStyle = 'white';
-      //   break;
-      // case 1:
-      //   ctx.fillStyle = 'red';
-      //   break;
-      // case 2:
-      //   ctx.fillStyle = 'green';
-      //   break;
-      // case 3:
-      //   ctx.fillStyle = 'blue';
-      //   break;
-      // }
-
-      // ctx.fillRect(i * size, j * size, size - 1, size - 1);
 
       displayCell(i, j, board[i] [j]);
 
     } // next j
   } // next i
-  // requestAnimationFrame(redraw);
 } // redraw
 
 function displayCell(i, j, color)
@@ -671,6 +557,7 @@ function displayCell(i, j, color)
   switch (color){
     case 0:
       ctx.fillStyle = 'RGB(255, 251, 202, 0.9)' ; // offwhite for debugging.  Return to 'white' or whatever the background is
+      // console.log('Printing white at ', i, j); // i is never greater than 92, even on cells that cover up border at 93
       break;
     case 1:
       ctx.fillStyle = 'red';
@@ -685,3 +572,31 @@ function displayCell(i, j, color)
     ctx.fillRect(i * size, j * size, size - 1, size - 1);
 
 } // displayCell
+
+var getXY = function() {
+  var rect = canvas.getBoundingClientRect(); //absolute position of canvas
+  return {
+    x: event.clientX - rect.left,
+    y: event.clientY - rect.top
+  };
+};
+
+document.onclick = function(mouse) {
+
+  var pos = getXY();
+  var mouseX = pos.x;
+  var mouseY = pos.y;
+
+  var hotX = Math.floor(mouseX/size);
+  var hotY = Math.floor(mouseY/size);
+
+  if (hotX > left && hotX <= width + left && hotY <= height)
+  {
+    check[hotX] [hotY] = true;
+    bypass = true;
+    checkField();
+  }
+
+  console.log('hotX, hotY', hotX, hotY);
+};
+
