@@ -16,9 +16,9 @@ var height = 75; // total hight of field
 var rows = 55; // height of prefill board
 var left = 2; // Not followed throughout.  Kept for compatibility
 var width = 90;
-var symbols = 3;
+var symbols = 4;
 var move = true; // disables keyboard control during collapse
-var size = 8; // Pixel size
+var size = 4; // Pixel size
 // declare multi-dimensional array board, per MDN Indexed Collections
 var x = 0; // x location of piece
 var y = 0; // y location of piece
